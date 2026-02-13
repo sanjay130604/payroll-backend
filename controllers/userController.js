@@ -12,9 +12,9 @@ exports.createUser = async (req, res) => {
     });
   }
 
-  // 1.5 Employee ID validation (Starts with EMP)
-  if (!employeeId.trim().toUpperCase().startsWith("EMP")) {
-    return res.status(400).json({ success: false, message: "Employee ID must start with 'EMP' (e.g., EMP001)" });
+  // 1.5 Employee ID validation (Starts with VTAB)
+  if (!employeeId.trim().toUpperCase().startsWith("VTAB")) {
+    return res.status(400).json({ success: false, message: "Employee ID must start with 'VTAB' (e.g., VTAB001)" });
   }
 
   // 2. Name length validation
@@ -468,8 +468,8 @@ exports.bulkUploadUsers = async (req, res) => {
     // Employee ID Validation
     if (!newUser.employeeId) {
       errors.push("Employee ID is required");
-    } else if (!/^EMP/i.test(newUser.employeeId)) {
-      errors.push("Employee ID must start with 'EMP'");
+    } else if (!/^VTAB/i.test(newUser.employeeId)) {
+      errors.push("Employee ID must start with 'VTAB'");
     }
 
     // Password Validation
