@@ -636,3 +636,20 @@ exports.downloadUserTemplate = (req, res) => {
   res.setHeader("Content-Type", "text/csv");
   res.status(200).send(csv);
 };
+/* ================= GET DASHBOARD STATS ================= */
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const r = await axios.post(process.env.SHEET_API, {
+      action: "getDashboardStats"
+    });
+
+    return res.json(r.data);
+
+  } catch (err) {
+    console.error("Dashboard Stats Error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};

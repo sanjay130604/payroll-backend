@@ -30,8 +30,11 @@ const {
   updateUser,
   deleteUser,
   bulkUploadUsers,
-  downloadUserTemplate
+  downloadUserTemplate,
+  getDashboardStats
 } = require("../controllers/userController");
+
+router.get("/dashboard-stats", getDashboardStats);
 
 router.post("/create", createUser);
 router.get("/all", getAllUsers);

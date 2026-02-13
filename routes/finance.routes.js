@@ -2,7 +2,13 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const PDFDocument = require("pdfkit");
-const { bulkUploadFinance } = require("../controllers/finance.controller");
+const {
+  bulkUploadFinance,
+  getPayFixation,
+  updatePayFixation,
+  deletePayFixation,
+  bulkUploadPayFixation
+} = require("../controllers/finance.controller");
 
 const FINANCE_API = process.env.FINANCE_SHEET_API;
 
@@ -250,6 +256,12 @@ router.post("/update", async (req, res) => {
    URL: POST /api/finance/bulk-upload
 ===================================================== */
 router.post("/bulk-upload", bulkUploadFinance);
+
+/* ================= PAY FIXATION ROUTES ================= */
+router.get("/pay-fixation", getPayFixation);
+router.post("/pay-fixation/update", updatePayFixation);
+router.post("/pay-fixation/delete", deletePayFixation);
+router.post("/pay-fixation/bulk-upload", bulkUploadPayFixation);
 
 
 module.exports = router;
