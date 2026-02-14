@@ -119,6 +119,20 @@ exports.deletePayFixation = async (req, res) => {
   }
 };
 
+
+/* ===== VALIDATE PAY FIXATION UPLOAD ===== */
+exports.validatePayFixationUpload = async (req, res) => {
+  try {
+    const r = await axios.post(FINANCE_API, {
+      action: "validatePayFixationUpload",
+      ...req.body
+    });
+    res.json(r.data);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 /* ===== BULK UPLOAD PAY FIXATION ===== */
 exports.bulkUploadPayFixation = async (req, res) => {
   try {

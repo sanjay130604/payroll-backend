@@ -262,6 +262,7 @@ router.get("/pay-fixation", getPayFixation);
 router.post("/pay-fixation/update", updatePayFixation);
 router.post("/pay-fixation/delete", deletePayFixation);
 router.post("/pay-fixation/bulk-upload", bulkUploadPayFixation);
+router.post("/pay-fixation/validate", require("../controllers/finance.controller").validatePayFixationUpload);
 
 
 module.exports = router;
