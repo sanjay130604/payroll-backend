@@ -7,7 +7,8 @@ const {
   getPayFixation,
   updatePayFixation,
   deletePayFixation,
-  bulkUploadPayFixation
+  bulkUploadPayFixation,
+  getPayrollTemplateData
 } = require("../controllers/finance.controller");
 
 const FINANCE_API = process.env.FINANCE_SHEET_API;
@@ -125,9 +126,11 @@ router.get("/payslip-pdf", async (req, res) => {
 
     const d = r.data.finance;
 
-    const gross = +d.basic + +d.hra + +d.otherAllowance + +d.specialPay + +d.incentive;
-    const deductions = +d.tds + +d.otherDeductions;
-    const netPay = gross - deductions;
+    // Use values from Google Sheet if available, else fallback to calculation
+    // FIX: Backend 'netPay' is Earnings (Gross), 'grossPay' is Take Home (Net)
+    const gross = d.netPay ? Number(d.netPay) : (+d.basic + +d.hra + +d.otherAllowance + +d.specialPay + +d.incentive);
+    const deductions = +d.tds;
+    const netPay = d.grossPay ? Number(d.grossPay) : (gross - deductions);
 
     const payPeriod = new Date(`${month}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
     const doj = d.dateOfJoining ? new Date(d.dateOfJoining).toLocaleDateString("en-IN") : "-";
@@ -175,7 +178,7 @@ router.get("/payslip-pdf", async (req, res) => {
     };
 
     erow("Basic", d.basic);
-    erow("HRA", d.hra);
+    // erow("HRA", d.hra);
     erow("Other Allowance", d.otherAllowance);
     erow("Special Pay", d.specialPay);
     erow("Incentive", d.incentive);
@@ -191,7 +194,6 @@ router.get("/payslip-pdf", async (req, res) => {
 
     doc.font("Helvetica");
     erow("TDS", d.tds);
-    erow("Other Deductions", d.otherDeductions);
 
     doc.font("Helvetica-Bold");
     erow("Total Deductions", deductions);
@@ -236,7 +238,7 @@ router.get("/payslip-pdf", async (req, res) => {
 router.post("/update", async (req, res) => {
   try {
     const r = await axios.post(FINANCE_API, {
-      action: "updateFinance",   // ✅ FIXED
+      action: "updateMonthlyFinance",   // ✅ FIXED
       ...req.body
     });
 
@@ -264,5 +266,21 @@ router.post("/pay-fixation/delete", deletePayFixation);
 router.post("/pay-fixation/bulk-upload", bulkUploadPayFixation);
 router.post("/pay-fixation/validate", require("../controllers/finance.controller").validatePayFixationUpload);
 
+/* ================= EXTERNAL DATA ================= */
+router.post("/external-allowances", async (req, res) => {
+  try {
+    const r = await axios.post(FINANCE_API, {
+      action: "getExternalAllowances",
+      ...req.body
+    });
+    res.json(r.data);
+  } catch (err) {
+    console.error("External Allowances Error:", err.message);
+    res.status(500).json({ success: false });
+  }
+});
+
+/* ================= PAYROLL TEMPLATE DATA ================= */
+router.get("/payroll-template", getPayrollTemplateData);
 
 module.exports = router;

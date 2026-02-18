@@ -1,6 +1,7 @@
 const axios = require("axios");
 
 const FINANCE_API = process.env.FINANCE_SHEET_API;
+const PAYROLL_TEMPLATE_API = process.env.PAYROLL_TEMPLATE_API;
 
 /* ===== GET MONTH ===== */
 exports.getMonthlyFinance = async (req, res) => {
@@ -41,6 +42,19 @@ exports.updateMonthlyFinance = async (req, res) => {
   }
 };
 
+/* ===== GET PAYROLL TEMPLATE DATA ===== */
+exports.getPayrollTemplateData = async (req, res) => {
+  try {
+    const r = await axios.post(PAYROLL_TEMPLATE_API, {
+      action: "getPayrollTemplate"
+    });
+    res.json(r.data);
+  } catch (err) {
+    console.error("Get Payroll Template Error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 /* ===== BULK UPLOAD FINANCE ===== */
 exports.bulkUploadFinance = async (req, res) => {
   try {
@@ -53,7 +67,7 @@ exports.bulkUploadFinance = async (req, res) => {
       });
     }
 
-    // Proxy the request to Apps Script - let Apps Script handle validation and storage
+    // Delegate all logic to Google Apps Script as per requirements
     const r = await axios.post(FINANCE_API, {
       action: "bulkUploadFinance",
       rows: rows
@@ -63,7 +77,7 @@ exports.bulkUploadFinance = async (req, res) => {
       res.json({
         success: true,
         message: r.data.message || "Bulk upload completed",
-        data: r.data.data // contains inserted, updated, skipped (with reasons)
+        data: r.data.data // Pass back inserted/updated/skipped counts
       });
     } else {
       res.status(400).json({
