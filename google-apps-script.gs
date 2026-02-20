@@ -417,7 +417,15 @@ function doPost(e) {
             for (let i = 1; i < rows.length; i++) {
                 if (normalizeValueToMonth(rows[i][0], ssTz) === m &&
                     String(rows[i][1]).toLowerCase().trim() === e) {
-                    return json({ success: true, row: i + 1, finance: mapRow(rows[i], ssTz) });
+                    
+                    const rowData = mapRow(rows[i], ssTz);
+                    
+                    // If email is missing in Finance row, use requested email
+                    if (!rowData.email || rowData.email === "-") {
+                        rowData.email = e;
+                    }
+                    
+                    return json({ success: true, row: i + 1, finance: rowData });
                 }
             }
             return json({ success: false });
@@ -623,6 +631,39 @@ function doPost(e) {
                 list.push(mapRow(rows[i], ssTz));
             }
             return json({ success: true, list });
+        }
+
+        /* =====================================================
+           GET FINANCE BY EMPLOYEE ID
+        ===================================================== */
+        if (data.action === "getFinanceByEmployeeId") {
+            const empId = String(data.employeeId).trim().toUpperCase();
+            if (!empId) return json({ success: false, message: "No employee ID" });
+
+            // Fetch from last row for this ID
+            for (let i = rows.length - 1; i >= 1; i--) {
+                if (String(rows[i][2]).trim().toUpperCase() === empId) {
+                    const rowData = mapRow(rows[i], ssTz);
+                    
+                    // If email is missing, fetch from Admin Details
+                    if (!rowData.email || rowData.email === "-") {
+                        const adminSs = SpreadsheetApp.openById(ADMIN_SHEET_ID);
+                        const userSheet = adminSs.getSheetByName(USER_TAB);
+                        if (userSheet) {
+                            const userRows = userSheet.getDataRange().getValues();
+                            for (let j = 1; j < userRows.length; j++) {
+                                // Match Employee ID in Column I (index 8)
+                                if (String(userRows[j][8]).trim().toUpperCase() === empId) {
+                                    rowData.email = String(userRows[j][3]).toLowerCase().trim();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    return json({ success: true, finance: rowData });
+                }
+            }
+            return json({ success: false, message: "No finance data found" });
         }
 
         return json({ success: false, message: "Invalid action" });
