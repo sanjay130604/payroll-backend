@@ -526,7 +526,7 @@ function doPost(e) {
                     if (nk === "fristname") nk = "firstname";
                     if (nk === "noofworkingday" || nk === "noofworkingdays") nk = "noofworkingday";
                     if (nk === "payday" || nk === "paydays") nk = "paydays";
-                    if (nk === "remainingpaidleaves" || nk === "remainingpaidleave") nh = "remainingpaidleave";
+                    if (nk === "remainingpaidleaves" || nk === "remainingpaidleave") nk = "remainingpaidleave";
                     if (nk === "netpay") nk = "netpay";
                     if (nk === "grosspay") nk = "grosspay";
                     const targetIdx = headerMap[nk];

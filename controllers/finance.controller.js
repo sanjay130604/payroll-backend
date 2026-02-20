@@ -45,7 +45,7 @@ exports.updateMonthlyFinance = async (req, res) => {
 /* ===== GET PAYROLL TEMPLATE DATA ===== */
 exports.getPayrollTemplateData = async (req, res) => {
   try {
-    const r = await axios.post(PAYROLL_TEMPLATE_API, {
+    const r = await axios.post(FINANCE_API, {
       action: "getPayrollTemplate"
     });
     res.json(r.data);
