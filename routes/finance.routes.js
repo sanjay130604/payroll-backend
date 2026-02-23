@@ -178,7 +178,7 @@ router.get("/payslip-pdf", async (req, res) => {
     };
 
     erow("Basic", d.basic);
-    // erow("HRA", d.hra);
+    erow("HRA", d.hra);
     erow("Other Allowance", d.otherAllowance);
     erow("Special Pay", d.specialPay);
     erow("Incentive", d.incentive);

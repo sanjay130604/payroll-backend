@@ -5,6 +5,7 @@ const FIXATION_TAB = "Pay Fixation";
 const USER_TAB = "user details";
 const ALLOWANCE_TAB = "ExternalAllowances";
 const PAYROLL_TEMPLATE_TAB = "PayrollTemplate"; // NEW: PayrollTemplate sheet
+const ATTENDANCE_TAB = "Sheet3"; // NEW: Attendance tracking sheet
 
 function doGet(e) {
     return ContentService.createTextOutput("Service is running").setMimeType(ContentService.MimeType.TEXT);
@@ -51,6 +52,35 @@ function doPost(e) {
             }
 
             return json({ success: true, list });
+        }
+
+        /* =====================================================
+           GET ATTENDANCE OVERVIEW (from Sheet3)
+        ===================================================== */
+        if (data.action === "getAttendanceOverview") {
+            const attSheet = ss.getSheetByName(ATTENDANCE_TAB);
+            if (!attSheet) return json({ success: false, message: "Attendance tab not found" });
+
+            const attRows = attSheet.getDataRange().getValues();
+            const email = String(data.email || "").toLowerCase().trim();
+            const empId = String(data.employeeId || "").toUpperCase().trim();
+
+            for (let i = 1; i < attRows.length; i++) {
+                const rowEmail = String(attRows[i][7] || "").toLowerCase().trim(); // Col H
+                const rowId = String(attRows[i][4] || "").toUpperCase().trim();    // Col E
+
+                if ((email && rowEmail === email) || (empId && rowId === empId)) {
+                    return json({
+                        success: true,
+                        attendance: {
+                            leavesUsed: num(attRows[i][1]),        // Col B
+                            totalLeaves: num(attRows[i][2]),       // Col C
+                            remainingPaidLeaves: num(attRows[i][3]) // Col D
+                        }
+                    });
+                }
+            }
+            return json({ success: false, message: "Attendance data not found" });
         }
 
         /* =====================================================

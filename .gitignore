@@ -3,3 +3,9 @@ node_modules
 .env.local
 logs
 npm-debug.log*
+
+# Debug scripts and temporary files
+debug_*.js
+profile_debug.json
+profile_response.json
+"# Error.txt"

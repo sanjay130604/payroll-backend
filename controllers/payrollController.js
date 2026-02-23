@@ -1,53 +1,6 @@
-// const Payroll = require("../models/Payroll");
-// const axios = require("axios");
-// exports.getPayroll = async (req, res) => {
-//   try {
-//     const payroll = await Payroll.findById(req.params.id);
-//     res.json(payroll);
-//   } catch {
-//     res.status(500).json({ message: "Fetch error" });
-//   }
-// };
-
-// exports.updatePayroll = async (req, res) => {
-//   try {
-//     const updated = await Payroll.findByIdAndUpdate(
-//       req.params.id,
-//       req.body,
-//       { new: true }
-//     );
-//     res.json(updated);
-//   } catch {
-//     res.status(500).json({ message: "Update failed" });
-//   }
-// };
-
-
-
-// /**
-//  * GET PAYROLL BY EMAIL
-//  */
-// exports.getPayrollByEmail = async (req, res) => {
-//   try {
-//     const { email } = req.query;
-
-//     const r = await axios.post(process.env.SHEET_API, {
-//       action: "getPayroll",
-//       email
-//     });
-
-//     return res.json(r.data);
-
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: "Payroll fetch failed"
-//     });
-//   }
-// };
-
 const axios = require("axios");
 const PDFDocument = require("pdfkit");
+const { sheetRequest } = require("../utils/sheetRequest");
 
 /**
  * GET PAYROLL BY EMAIL (USER ONLY)
@@ -64,12 +17,12 @@ exports.getPayrollByEmail = async (req, res) => {
       });
     }
 
-    const response = await axios.post(process.env.SHEET_API, {
+    const data = await sheetRequest(process.env.SHEET_API, {
       action: "getPayrollByEmail",
       email
     });
 
-    return res.json(response.data);
+    return res.json(data);
 
   } catch (err) {
     console.error("Payroll fetch error:", err.message);
@@ -83,12 +36,12 @@ exports.getPayrollByEmail = async (req, res) => {
 
 exports.updatePayrollByEmail = async (req, res) => {
   try {
-    const response = await axios.post(process.env.SHEET_API, {
+    const data = await sheetRequest(process.env.SHEET_API, {
       action: "updatePayrollByEmail",
       ...req.body
     });
 
-    return res.json(response.data);
+    return res.json(data);
   } catch (err) {
     return res.status(500).json({
       success: false,
@@ -96,7 +49,6 @@ exports.updatePayrollByEmail = async (req, res) => {
     });
   }
 };
-//error occur
 exports.updatePayroll = async (req, res) => {
   try {
     const r = await axios.post(process.env.SHEET_API, {
@@ -110,22 +62,6 @@ exports.updatePayroll = async (req, res) => {
   }
 };
 
-// exports.getSalaryHistoryByEmail = async (req, res) => {
-//   try {
-//     const response = await axios.post(process.env.SHEET_API, {
-//       action: "getSalaryHistory",
-//       email: req.query.email
-//     });
-
-//     return res.json(response.data);
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: "Salary history fetch failed"
-//     });
-//   }
-// };
-
 exports.getSalaryHistoryByEmail = async (req, res) => {
   try {
     const { email, year, month } = req.query;
@@ -137,14 +73,14 @@ exports.getSalaryHistoryByEmail = async (req, res) => {
       });
     }
 
-    const r = await axios.post(process.env.FINANCE_SHEET_API, {
+    const data = await sheetRequest(process.env.FINANCE_SHEET_API, {
       action: "getSalaryHistory",
       email,
       year,
       month
     });
 
-    return res.json(r.data);
+    return res.json(data);
 
   } catch (err) {
     console.error("Salary history error:", err.message);
@@ -156,145 +92,6 @@ exports.getSalaryHistoryByEmail = async (req, res) => {
 };
 
 
-// /**
-//  * DOWNLOAD SALARY PDF (MONTH WISE)
-//  */
-// exports.downloadSalaryPDF = async (req, res) => {
-//   try {
-//     const { email, month } = req.query;
-
-//     if (!email || !month) {
-//       return res.status(400).json({ message: "Email and month required" });
-//     }
-
-//     // Fetch salary history
-//     const response = await axios.post(process.env.SHEET_API, {
-//       action: "getSalaryHistory",
-//       email
-//     });
-
-//     const record = response.data.history.find(
-//       m => m.month.toLowerCase() === month.toLowerCase()
-//     );
-
-//     if (!record || !record.salary) {
-//       return res.status(404).json({ message: "Salary not generated" });
-//     }
-
-//     // Create PDF
-//     const doc = new PDFDocument({ margin: 50 });
-
-//     res.setHeader(
-//       "Content-Disposition",
-//       `attachment; filename=salary_${month}.pdf`
-//     );
-//     res.setHeader("Content-Type", "application/pdf");
-
-//     doc.pipe(res);
-
-//     // ===== PDF CONTENT =====
-//     doc
-//       .fontSize(20)
-//       .text("Salary Slip", { align: "center" })
-//       .moveDown(2);
-
-//     doc.fontSize(12);
-//     doc.text(`Employee Email : ${email}`);
-//     doc.text(`Month          : ${record.month}`);
-//     doc.text(`Date Generated : ${record.date}`);
-//     doc.moveDown();
-
-//     doc
-//       .fontSize(14)
-//       .text(
-//         `Salary Amount : ₹${Number(record.salary).toLocaleString("en-IN")}`,
-//         { underline: true }
-//       );
-
-//     doc.moveDown(2);
-//     doc.fontSize(10).text("This is a system generated salary slip.");
-
-//     doc.end();
-
-//   } catch (err) {
-//     console.error("PDF error:", err);
-//     res.status(500).json({ message: "PDF generation failed" });
-//   }
-// };
-
-/**
- * GENERATE COMBINED SALARY PDF (MULTI MONTH)
-//  */
-// exports.generateSalaryPDF = async (req, res) => {
-//   try {
-//     const { email, months } = req.body;
-
-//     if (!email || !months || months.length === 0) {
-//       return res.status(400).json({ message: "Email & months required" });
-//     }
-
-//     // Fetch salary history
-//     const response = await axios.post(process.env.SHEET_API, {
-//       action: "getSalaryHistory",
-//       email
-//     });
-
-//     const history = response.data.history || [];
-
-//     const selected = history.filter(m =>
-//       months.includes(m.month) && m.salary
-//     );
-
-//     if (selected.length === 0) {
-//       return res.status(404).json({ message: "No salary data found" });
-//     }
-
-//     const doc = new PDFDocument({ margin: 50 });
-
-//     res.setHeader(
-//       "Content-Disposition",
-//       "attachment; filename=salary_history.pdf"
-//     );
-//     res.setHeader("Content-Type", "application/pdf");
-
-//     doc.pipe(res);
-
-//     // ===== PDF HEADER =====
-//     doc.fontSize(20).text("Salary History Report", { align: "center" });
-//     doc.moveDown();
-//     doc.fontSize(12).text(`Employee Email: ${email}`);
-//     doc.moveDown(2);
-
-//     // ===== MONTH WISE DATA =====
-//     selected.forEach((m, index) => {
-//       doc
-//         .fontSize(16)
-//         .text(`${index + 1}. ${m.month}`, { underline: true })
-//         .moveDown(0.5);
-
-//       doc.fontSize(12);
-//       doc.text(`Salary : ₹${Number(m.salary).toLocaleString("en-IN")}`);
-//       doc.text(`Generated Date : ${m.date}`);
-
-//       doc.moveDown(1.5);
-//       doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-//       doc.moveDown();
-//     });
-
-//     doc.fontSize(10).text(
-//       "This is a system-generated salary report.",
-//       { align: "center" }
-//     );
-
-//     doc.end();
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "PDF generation failed" });
-//   }
-// };
-
-
-//domo
 
 
 exports.generateSalaryPDF = async (req, res) => {
@@ -484,18 +281,47 @@ exports.getPayrollByEmployeeId = async (req, res) => {
       });
     }
 
-    const r = await axios.post(process.env.FINANCE_SHEET_API, {
+    const data = await sheetRequest(process.env.FINANCE_SHEET_API, {
       action: "getFinanceByEmployeeId",
       employeeId
     });
 
-    return res.json(r.data);
+    return res.json(data);
 
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       success: false,
       message: "Payroll fetch failed"
+    });
+  }
+};
+
+/* ================= GET ATTENDANCE OVERVIEW ================= */
+exports.getAttendanceByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId, email } = req.query;
+
+    if (!employeeId && !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee ID or Email required"
+      });
+    }
+
+    const data = await sheetRequest(process.env.FINANCE_SHEET_API, {
+      action: "getAttendanceOverview",
+      employeeId,
+      email
+    });
+
+    return res.json(data);
+
+  } catch (err) {
+    console.error("Attendance fetch error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Attendance fetch failed"
     });
   }
 };
