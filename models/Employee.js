@@ -11,7 +11,7 @@ const EmployeeSchema = new mongoose.Schema({
   dataAllowance: Number,
   travelAllowance: Number,
   shiftAllowance: Number,
-  otherAllowance: Number,
+  otherAllowance: Number,  
 
   pf: Number,
   tds: Number,
