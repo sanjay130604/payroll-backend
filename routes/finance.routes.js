@@ -136,22 +136,29 @@ const generatePayslipPdfBuffer = async (d, month) => {
       doc.registerFont("NotoSans", FONT_REGULAR);
       doc.registerFont("NotoSans-Bold", FONT_BOLD);
 
-      doc.fontSize(16).font("NotoSans-Bold").text("V Tab Square Private Limited", { align: "center" });
+      // --- BLUE HEADER ---
+      doc.rect(0, 0, doc.page.width, 100).fill("#1E40AF"); // Deep Blue background
+
+      doc.fillColor("#FFFFFF");
+      doc.fontSize(22).font("NotoSans-Bold").text("VTab Square Private Limited", 0, 30, { align: "center" });
       doc.fontSize(10).font("NotoSans").text("Coimbatore, Tamil Nadu, India", { align: "center" });
-      doc.moveDown(1);
+      doc.fontSize(14).font("NotoSans-Bold").text("PAYSLIP", { align: "center" });
+
+      doc.moveDown(2.5);
+      doc.fillColor("#1F2937"); // Reset to dark grey for content
 
       const startX = 40;
-      let y = doc.y;
+      let y = doc.y + 10;
 
       const row = (label, value) => {
-        doc.rect(startX, y, 200, 22).stroke();
+        doc.rect(startX, y, 200, 22).strokeColor("#E5E7EB").stroke();
         doc.rect(startX + 200, y, 315, 22).stroke();
-        doc.fontSize(10).text(label, startX + 5, y + 6);
-        doc.text(value, startX + 205, y + 6);
+        doc.fontSize(10).font("NotoSans-Bold").text(label, startX + 10, y + 6);
+        doc.font("NotoSans").text(value, startX + 210, y + 6);
         y += 22;
       };
 
-      row("Employee Name", d.fullName);
+      row("Employee Name", d.fullName || `${d.firstName} ${d.lastName}`);
       row("Employee ID", d.employeeId);
       row("Email", d.email);
       row("Date of Joining", doj);
@@ -159,45 +166,53 @@ const generatePayslipPdfBuffer = async (d, month) => {
       row("Paid Days", d.paidDays);
       row("LOP Days", d.lopDays || 0);
 
-      y += 10;
+      y += 20;
 
-      doc.rect(startX, y, 515, 22).stroke();
-      doc.font("NotoSans-Bold").text("Earnings", startX, y + 6, { align: "center", width: 515 });
-      y += 22;
+      // Section Header: Earnings
+      doc.rect(startX, y, 515, 25).fill("#F3F4F6");
+      doc.rect(startX, y, 515, 25).strokeColor("#E5E7EB").stroke();
+      doc.fillColor("#1F2937").font("NotoSans-Bold").text("EARNINGS", startX, y + 7, { align: "center", width: 515 });
+      y += 25;
 
       const erow = (label, value) => {
-        doc.rect(startX, y, 350, 22).stroke();
+        doc.rect(startX, y, 350, 22).strokeColor("#E5E7EB").stroke();
         doc.rect(startX + 350, y, 165, 22).stroke();
-        doc.font("NotoSans").text(label, startX + 5, y + 6);
-        doc.text(`\u20B9${value}`, startX + 355, y + 6, { align: "right", width: 150 });
+        doc.fillColor("#1F2937").font("NotoSans").text(label, startX + 10, y + 6);
+        doc.font("NotoSans-Bold").text(`\u20B9${Number(value || 0).toLocaleString("en-IN")}`, startX + 355, y + 6, { align: "right", width: 150 });
         y += 22;
       };
 
-      erow("Basic", d.basic);
+      erow("Basic Salary", d.basic);
       erow("HRA", d.hra);
       erow("Other Allowance", d.otherAllowance);
       erow("Special Pay", d.specialPay);
       erow("Incentive", d.incentive);
 
-      doc.font("NotoSans-Bold");
-      erow("Gross Earnings", gross);
+      doc.rect(startX, y, 515, 25).fill("#EFF6FF"); // Light blue for gross
+      doc.rect(startX, y, 515, 25).strokeColor("#E5E7EB").stroke();
+      doc.fillColor("#1F2937").font("NotoSans-Bold").text("Gross Earnings", startX + 10, y + 7);
+      doc.text(`\u20B9${gross.toLocaleString("en-IN")}`, startX + 355, y + 7, { align: "right", width: 150 });
+      y += 35;
 
-      y += 10;
+      // Section Header: Deductions
+      doc.rect(startX, y, 515, 25).fill("#F3F4F6");
+      doc.rect(startX, y, 515, 25).strokeColor("#E5E7EB").stroke();
+      doc.fillColor("#1F2937").font("NotoSans-Bold").text("DEDUCTIONS", startX, y + 7, { align: "center", width: 515 });
+      y += 25;
 
-      doc.rect(startX, y, 515, 22).stroke();
-      doc.font("NotoSans-Bold").text("Deductions", startX, y + 6, { align: "center", width: 515 });
-      y += 22;
+      erow("Income Tax (TDS)", d.tds);
 
-      doc.font("NotoSans");
-      erow("TDS", d.tds);
+      doc.rect(startX, y, 515, 25).fill("#FEF2F2"); // Light red for deductions
+      doc.rect(startX, y, 515, 25).strokeColor("#E5E7EB").stroke();
+      doc.fillColor("#1F2937").font("NotoSans-Bold").text("Total Deductions", startX + 10, y + 7);
+      doc.text(`\u20B9${deductions.toLocaleString("en-IN")}`, startX + 355, y + 7, { align: "right", width: 150 });
+      y += 40;
 
-      doc.font("NotoSans-Bold");
-      erow("Total Deductions", deductions);
-
-      y += 15;
-
-      doc.fontSize(12).font("NotoSans-Bold").text(`Net Pay: \u20B9${netPay}`, startX, y);
-      doc.fontSize(10).font("NotoSans").text(numberToWords(netPay), startX, y + 18);
+      // --- NET PAY BOX ---
+      doc.rect(startX, y, 515, 60).fill("#1E40AF"); // Blue box for net pay
+      doc.fillColor("#FFFFFF");
+      doc.fontSize(14).font("NotoSans-Bold").text(`NET PAY: \u20B9${netPay.toLocaleString("en-IN")}`, startX, y + 15, { align: "center", width: 515 });
+      doc.fontSize(10).font("NotoSans").text(numberToWords(netPay), startX, y + 35, { align: "center", width: 515 });
 
       doc.end();
     } catch (err) {
@@ -267,21 +282,23 @@ router.post("/send-payslip-email", async (req, res) => {
       <p>Payroll Admin</p>
     `;
 
-    // Sender must be verified on Brevo, fallback to process.env.EMAIL
+    // Use the verified sender email from .env, keep adminEmail for replyTo
     const senderEmail = process.env.EMAIL;
-    // AFTER
-    // const senderEmail = adminEmail || process.env.EMAIL;
 
     const emailPayload = {
       sender: {
         name: "Payroll Admin",
         email: senderEmail,
       },
+      replyTo: {
+        email: senderEmail,
+        name: "Payroll Admin"
+      },
       to: [
         { email: email }
       ],
       cc: [
-        { email: "Balamuraleee@gmail.com" },
+        { email: adminEmail || "Balamuraleee@gmail.com" },
         { email: "vigneshrajas.vtab@gmail.com" }
       ],
       subject: subject,
